@@ -10,6 +10,7 @@ Citizen.CreateThread(function()
 end)
 
 local CurrentPings = {}
+local PingActive = false
 
 RegisterNetEvent('cm-ping:client:DoPing')
 AddEventHandler('cm-ping:client:DoPing', function(id) 
@@ -25,6 +26,7 @@ AddEventHandler('cm-ping:client:DoPing', function(id)
     TriggerServerEvent('cm-ping:server:SendPing', id, coords)
 end)
 
+
 RegisterNetEvent('cm-ping:client:AcceptPing')
 AddEventHandler('cm-ping:client:AcceptPing', function(PingData, SenderData) 
     local ped = GetPlayerPed(-1)
@@ -33,8 +35,9 @@ AddEventHandler('cm-ping:client:AcceptPing', function(PingData, SenderData)
 end)
 
 RegisterNetEvent('cm-ping:client:SendLocation')
-AddEventHandler('cm-ping:client:SendLocation', function(PingData, SenderData) 
+AddEventHandler('cm-ping:client:SendLocation', function(PingData, SenderData)
     exports['mythic_notify']:SendAlert('inform', 'The location has been set on your GPS.')
+    PingActive = true
     CurrentPings[PingData.sender] = AddBlipForCoord(PingData.coords.x, PingData.coords.y, PingData.coords.z)
     --CurrentPings[PingData.sender] = AddBlipForCoord(114.72, -998.65, 29.4)
     SetBlipSprite(CurrentPings[PingData.sender], 280)
@@ -45,9 +48,14 @@ AddEventHandler('cm-ping:client:SendLocation', function(PingData, SenderData)
     BeginTextCommandSetBlipName("STRING")
     AddTextComponentSubstringPlayerName("Ping")
     EndTextCommandSetBlipName(CurrentPings[PingData.sender])
-    SetTimeout(5 * (60 * 1000), function() 
-        exports['mythic_notify']:SendAlert('error', 'Ping ' .. PingData.sender .. ' Pin has expired..')
-        RemoveBlip(CurrentPings[PingData.sender])
-        CurrentPings[PingData.sender] = nil
-    end)
+    while PingActive do
+        Citizen.Wait(0)
+        local ped = GetPlayerPed(-1)
+        local pos = GetEntityCoords(ped)
+        if GetDistanceBetweenCoords(pos.x, pos.y, pos.z, PingData.coords.x, PingData.coords.y, PingData.coords.z, true) < 5.0 then
+            exports['mythic_notify']:SendAlert('inform', 'You have arrived at your destination')
+            RemoveBlip(CurrentPings[PingData.sender])
+            PingActive = false
+        end
+    end
 end)
