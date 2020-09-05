@@ -17,7 +17,6 @@ AddEventHandler('cm-ping:client:DoPing', function(id)
     local player = GetPlayerFromServerId(id)
     local ped = GetPlayerPed(player)
     local pos = GetEntityCoords(ped)
-    print(pos)
     local coords = {
         x = pos.x,
         y = pos.y,
